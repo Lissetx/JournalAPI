@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  journaldb:
+    image: mongo:latest
+    container_name: journaldb
+    ports:
+      - "5010:27017"
