@@ -9,8 +9,8 @@ const connectDatabase = async function() {
 
   const client = new MongoClient(uri);
   client.connect((err) => {
-    dbconnection = client.db("RetroGameApi");
-    console.log("Connected to MongoDB");
+    dbconnection = client.db("JournalAPI");
+    return dbconnection;
     // listDatabases(client);
 
 
@@ -18,3 +18,5 @@ const connectDatabase = async function() {
 
 
 };
+
+module.exports = {connectDatabase};

@@ -30,7 +30,7 @@ const apiDoc = {
     },
     schemas: {
       journalId: {
-        type: "string",
+        type: "integer",
       },
       journal: {
         type: "object",
@@ -46,10 +46,10 @@ const apiDoc = {
         },
       },
       entryId: {
-        type: "string",
+        type: "integer",
       },
       entry: {
-        type: "object",
+        type: "integer",
         properties: {
           id: { $ref: "#/components/schemas/entryId" },
           journalId: { $ref: "#/components/schemas/journalId" },
@@ -59,7 +59,7 @@ const apiDoc = {
         },
       },
       userId: {
-        type: "string",
+        type: "integer",
       },
       user: {
         type: "object",
