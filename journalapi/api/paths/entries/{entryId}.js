@@ -7,13 +7,18 @@ module.exports = function() {
 
     async function GET(req, res, next){
         console.log("GET /entries/:entryId");
-        const database = db.connectDatabase();
-        const entry = await database.collection('entries').findOne({id: parseInt(req.params.entryId)});
+        try{
+        const database = await db.connectDatabase();
+        const entry = await database.collection('Entries').findOne({entryId: parseInt(req.params.entryId)});
         //set link to the journal id of the entry
-        entry.links = {journal: `/journals/${entry.journalId}`}
+        entry.journalId = `http://localhost:5050/journals/${entry.journalId}`;
         //return entry
         res.status(200).json(entry);
-
+        }catch(error)
+        {
+            console.log(error);
+            res.status(500).json({message: "Internal server error"});
+        }
     }
 
     GET.apiDoc = {
@@ -38,7 +43,7 @@ module.exports = function() {
                 content: {
                     'application/json': {
                         schema: {
-                            $ref: '#/components/schemas/Entry',
+                            $ref: '#/components/schemas/entry',
                         },
                     },
                 },
@@ -47,5 +52,5 @@ module.exports = function() {
     };
 
     return operations;
-    
+
 }

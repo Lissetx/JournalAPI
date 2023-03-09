@@ -9,18 +9,22 @@ module.exports = function(){
 
     async function GET(req, res, next){
         console.log("GET /journals");
-        const database = db.connectDatabase();
-        const journals = await database.collection('journals').find().toArray();
+        const database = await db.connectDatabase();
+        const journals = await database.collection('Journals').find({}).toArray();
         // set link to the user id of the journal
-        journals.forEach(journal => {
-            journal.links = {user: `/users/${journal.userId}`}
-        });
+       
+
+        for (let i = 0; i < journals.length; i++) {
+            const journal = journals[i];
+            //replace user with link to user
+            journal.userId =  `http://localhost:5050/users/${journal.userId}`;
+            //replace entries with links to entries
+            for(let j = 0; j < journal.entries.length; j++){
+                journal.entries[j] = {entry: `http://localhost:5050/entries/${journal.entries[j]}`};
+            }
+        }
         //loop trough the entries array and set a link to the entry id for each entry
-        journals.forEach(journal => {
-            journal.entries.forEach(entry => {
-                entry.links = {entry: `/entries/${entry.id}`}
-            })
-        });
+        
 
         res.status(200).json(journals);
     }
@@ -36,7 +40,7 @@ module.exports = function(){
                     'application/json': {
                         schema: {
                             type: 'array',
-                            items: { $ref: '#/components/schemas/Journal' }
+                            items: { $ref: '#/components/schemas/journal' }
                         },
                     },
                 },

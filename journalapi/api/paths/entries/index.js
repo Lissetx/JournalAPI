@@ -7,15 +7,15 @@ module.exports = function(){
 
     async function GET(req, res, next){
         console.log("GET /entries");
-        const database = db.connectDatabase();
-        const entries = await database.collection('entries').find().toArray();
+        const database = await db.connectDatabase();
+        const entries = await database.collection('Entries').find({}).toArray();
         
 
-        entries.forEach(entry => {
-            //http://localhost:loadbalancerport/journals/:id
-            entry.links = {journal: `/journals/${entry.journalId}`}
-        });
-
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+            //replace journal with link to journal
+            entry.journalId =  `http://localhost:5050/journals/${entry.journalId}`;
+        }
         //return users
         res.status(200).json(entries);
     }
@@ -31,7 +31,7 @@ module.exports = function(){
                     'application/json': {
                         schema: {
                             type: 'array',
-                            items: { $ref: '#/components/schemas/Entry' }
+                            items: { $ref: '#/components/schemas/entry' }
                         },
                     },
                 },

@@ -5,3 +5,29 @@ services:
     container_name: journaldb
     ports:
       - "5010:27017"
+  myjournalapi:
+    restart: always
+    build: ../journalapi
+    links:
+      - journaldb
+    ports:
+      -"5051:5050"
+    depends_on:
+      - journaldb
+  myjournalapi2:
+    restart: always
+    build: ../journalapi
+    links:
+      - journaldb
+    ports:
+      -"5052:5050"
+    depends_on:
+      - journaldb
+  nginx:
+    build: ../nginx
+    ports:
+      - "5053:80"
+    depends_on:
+      - myjournalapi
+      - myjournalapi2
+

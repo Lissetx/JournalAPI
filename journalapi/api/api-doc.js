@@ -41,7 +41,7 @@ const apiDoc = {
           description: { type: "string" },
           entries: {
             type: "array",
-            items: { $ref: "#/components/schemas/entry" },
+            items: { $ref: "#/components/schemas/entryId" },
           },
         },
       },
@@ -69,7 +69,7 @@ const apiDoc = {
           password: { type: "string" },
           journals: {
             type: "array",
-            items: { $ref: "#/components/schemas/journal" },
+            items: { $ref: "#/components/schemas/journalId" },
           },
         },
       },

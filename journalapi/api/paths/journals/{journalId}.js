@@ -2,22 +2,32 @@ module.exports = function () {
   const db = require("../../../db.js");
 
   let operations = {
-    GET,
+    GET
   };
 
   async function GET(req, res, next) {
     console.log("GET /journals/:journalId");
-    const database = db.connectDatabase();
-    const journal = await database
-      .collection("journals")
-      .findOne({ id: parseInt(req.params.journalId) });
+    console.log("req.params:", req.params);
+    try{
+    const database = await db.connectDatabase();
+    const journal = await database.collection("Journals").findOne({ journalId: parseInt(req.params.journalId) });
+      console.log("journal:", journal);
     //set link to the user id of the journal
-    journal.links = { user: `/users/${journal.userId}` };
-    //loop trough the entries array and set a link to the entry id for each entry
-    journal.entries.forEach((entry) => {
-      entry.links = { entry: `/entries/${entry.id}` };
-    });
+
+     journal.userId = `http://localhost:5050/users/${journal.userId}`;
+    // delete journal.userId;
+    for (let i = 0; i < journal.entries.length; i++) {
+        const entryId = journal.entries[i];
+        journal.entries[i] = { entryId: `http://localhost:5050/entries/${entryId}` };
+    }
+      res.status(200).json(journal);
+    }
+ catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  
   }
+}
 
   GET.apidoc = {
     summary: "Get a journal by id",
@@ -41,7 +51,7 @@ module.exports = function () {
             content: {
                 'application/json': {
                     schema: {
-                        $ref: '#/components/schemas/Journal',
+                        $ref: '#/components/schemas/journal',
                     },
                 },
             },

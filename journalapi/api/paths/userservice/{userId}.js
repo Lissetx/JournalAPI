@@ -8,20 +8,27 @@ module.exports = function(){
     async function GET(req, res, next){
         console.log("GET /users/:userId");
         //find one user by id
-        const database = db.connectDatabase();
-        const user = await database.collection('users').findOne({id: parseInt(req.params.userId)});
+        console.log("req.params:", req.params);
+
+        try{
+        const database = await db.connectDatabase();
+        const user = await database.collection('Users').findOne({userId: parseInt(req.params.userId)});
         //set links for users journals , by looping through the journal array (which contains journal ids)
         //for each journal id, set a link to /journals/:id
 
-        user.journals.forEach(journal => {
-            //http://localhost:loadbalancerport/journals/:id
-            journal.links = {journal: `/journals/${journal.id}`}
-        });
+        for (let i = 0; i < user.journals.length; i++) {
+            const journalId = user.journals[i];
+            user.journals[i] = {journalId: `http://localhost:5050/journals/${journalId}`};
+        }
 
         //return users
         res.status(200).json(user);
     }
-
+    catch(err){
+        console.log(err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+    }
     GET.apiDoc = {
         summary: 'Get a user by id',
         description: "Get a user by id",
@@ -44,7 +51,7 @@ module.exports = function(){
                 content: {
                     'application/json': {
                         schema: {
-                            $ref: '#/components/schemas/User',
+                            $ref: '#/components/schemas/user',
                         },
                     },
                 },
