@@ -1,8 +1,6 @@
-const apiDoc = require("../../api-doc.js");
-
 module.exports = function () {
   const db = require("../../../db.js");
-  const { postCreateJournal } = require("../../../streams/kafka.js");
+  const { postCreateEntry } = require("../../../streams/kafka.js");
 
   let operations = {
     GET,
@@ -10,34 +8,30 @@ module.exports = function () {
   };
 
   async function GET(req, res, next) {
-    console.log("GET /journals");
+    console.log("GET /entries");
     const database = await db.connectDatabase();
-    const journals = await database.collection("Journals").find({}).toArray();
-    // set link to the user id of the journal
+    const entries = await database.collection("Entries").find({}).toArray();
 
-    for (let i = 0; i < journals.length; i++) {
-      const journal = journals[i];
-      //replace user with link to user
-      journal.userId = `http://localhost:5053/users/${journal.userId}`;
-      //replace entries with links to entries
-      for (let j = 0; j < journal.entries.length; j++) {
-        journal.entries[j] = {
-          entry: `http://localhost:5053/entriesservice/${journal.entries[j]}`,
-        };
-      }
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      //replace journal with link to journal
+      entry.journalId = `http://localhost:5053/journals/${entry.journalId}`;
     }
-    //loop trough the entries array and set a link to the entry id for each entry
-
-    res.status(200).json(journals);
+    //return users
+    res.status(200).json(entries);
   }
 
+  /////////////////////////// use producer to send to kafka
+
   async function POST(req, res, next) {
-    console.log("POST /journals");
+    console.log("POST /entries");
     console.log("req.body:", req.body);
+    console.log("WE ARE HERE");
     //send to kafka
+   
     try {
-      await postCreateJournal("journalCreated",req.body);
-      res.status(201).json({ message: "Journal created" });
+      await postCreateEntry("entryCreated", req.body);
+      res.status(201).json({ message: "Entry created" });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Internal server error" });
@@ -45,9 +39,9 @@ module.exports = function () {
   }
 
   GET.apiDoc = {
-    summary: "Get all journals",
-    description: "Get a list of all journals",
-    operationId: "getJournals",
+    summary: "Get all entries",
+    description: "Get a list of all entries",
+    operationId: "getEntries",
     responses: {
       200: {
         description: "OK",
@@ -55,7 +49,7 @@ module.exports = function () {
           "application/json": {
             schema: {
               type: "array",
-              items: { $ref: "#/components/schemas/journal" },
+              items: { $ref: "#/components/schemas/entry" },
             },
           },
         },
@@ -64,23 +58,21 @@ module.exports = function () {
   };
 
   POST.apiDoc = {
-    summary: "Create a journal",
-    description: "Create a journal",
-    operationId: "createJournal",
+    summary: "Create a new entry",
+    description: "Create a new entry",
+    operationId: "createEntry",
     requestBody: {
-      description: "Journal object that needs to be added to the database",
+      description: "Entry to create",
       content: {
         "application/json": {
-          schema: {
-            $ref: "#/components/schemas/journal",
-          },
+          schema: { $ref: "#/components/schemas/entry" },
         },
       },
       required: true,
     },
     responses: {
       201: {
-        description: "Journal created",
+        description: "Created",
         content: {
           "application/json": {
             schema: {
@@ -88,7 +80,7 @@ module.exports = function () {
               properties: {
                 message: {
                   type: "string",
-                  example: "Journal created",
+                  example: "Entry created",
                 },
               },
             },

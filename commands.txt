@@ -1,0 +1,4 @@
+docker exec broker kafka-topics --bootstrap-server broker:5092 --create --topic offers
+
+
+docker compose -p journalapi up --build --force-recreate -d

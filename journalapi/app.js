@@ -8,7 +8,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 const {initialize} = require('express-openapi');
 const swaggerUi = require('swagger-ui-express');
-// const prometheusBundle = require("express-prom-bundle");
+const prometheusBundle = require("express-prom-bundle");
 
 var app = express();
 
@@ -21,21 +21,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 
-// const metricsMiddleware = prometheusBundle({
-//     includeMethod: true,
-//     includePath: true,
-//     includeStatusCode: true,
-//     includeUp: true,
-//     customLabels: {
-//         project_name: "retrogameapi",
-//         project_type: "api_service",
-//         promClient:{
-//             collectDefaultMetrics: {}
-//         }
-//     }
-// });
+const metricsMiddleware = prometheusBundle({
+    includeMethod: true,
+    includePath: true,
+    includeStatusCode: true,
+    includeUp: true,
+    customLabels: {
+        project_name: "journalapi",
+        project_type: "api_service",
+        promClient:{
+            collectDefaultMetrics: {}
+        }
+    }
+});
 
-// app.use(metricsMiddleware);
+app.use(metricsMiddleware);
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

@@ -1,53 +1,44 @@
 module.exports = function () {
   const db = require("../../../db.js");
-  const {
-    deleteJournal,
-    patchUpdateJounral,
-  } = require("../../../streams/kafka.js");
 
+  const {
+    deleteEntry,
+    patchUpdateEntry,
+  } = require("../../../streams/kafka.js");
   let operations = {
     GET,
     PATCH,
-    DELETE,
+    DELETE
   };
 
   async function GET(req, res, next) {
-    console.log("GET /journals/:journalId");
-    console.log("req.params:", req.params);
+    console.log("GET /entries/:entryId");
     try {
       const database = await db.connectDatabase();
-      const journal = await database
-        .collection("Journals")
-        .findOne({ journalId: parseInt(req.params.journalId) });
-      console.log("journal:", journal);
-      //set link to the user id of the journal
-
-      journal.userId = `http://localhost:5050/users/${journal.userId}`;
-      // delete journal.userId;
-      for (let i = 0; i < journal.entries.length; i++) {
-        const entryId = journal.entries[i];
-        journal.entries[i] = {
-          entryId: `http://localhost:5050/entries/${entryId}`,
-        };
-      }
-      res.status(200).json(journal);
+      const entry = await database
+        .collection("Entries")
+        .findOne({ entryId: parseInt(req.params.entryId) });
+      //set link to the journal id of the entry
+      entry.journalId = `http://localhost:5050/journals/${entry.journalId}`;
+      //return entry
+      res.status(200).json(entry);
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
+  ///////////// use producer to send to kafka
 
-  /////////////// use producer to send to kafka
   async function PATCH(req, res, next) {
-    console.log("PATCH /journals/:journalId");
+    console.log("PATCH /entries/:entryId");
     console.log("req.params:", req.params);
     console.log("req.body:", req.body);
     try {
       //No database update, just send to kafka
-      //add the journalId to the body
-      req.body.journalId = parseInt(req.params.journalId);
-      await patchUpdateJounral("journalUpdated", req.body);
-      res.status(200).json({ message: "Journal updated" });
+      //add the entryId to the body
+      req.body.entryId = parseInt(req.params.entryId);
+      await patchUpdateEntry("entryUpdated", req.body);
+      res.status(200).json({ message: "Entry updated" });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Internal server error" });
@@ -55,36 +46,34 @@ module.exports = function () {
   }
 
   async function DELETE(req, res, next) {
-    console.log("DELETE /journals/:journalId");
+    console.log("DELETE /entries/:entryId");
     console.log("req.params:", req.params);
     try {
       //No database update, just send to kafka
       //send as json
-      const journalIdJson ={
-        journalId: parseInt(req.params.journalId)
-      }
-      await deleteJournal("journalDeleted", journalIdJson);
-      res.status(200).json({ message: "Journal deleted" });
+      const entryIdJson = { entryId: parseInt(req.params.entryId) };
+      await deleteEntry("entryDeleted", entryIdJson);
+      res.status(200).json({ message: "Entry deleted" });
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  GET.apidoc = {
-    summary: "Get a journal by id",
-    description: "Get a journal by id",
-    operationId: "getJournalById",
+  GET.apiDoc = {
+    summary: "Get an entry by id",
+    description: "Get an entry by id",
+    operationId: "getEntryById",
     parameters: [
       {
         in: "path",
-        name: "journalId",
+        name: "entryId",
         schema: {
           type: "integer",
           format: "int64",
         },
         required: true,
-        description: "The id of the journal to get",
+        description: "The id of the entry to get",
       },
     ],
     responses: {
@@ -93,7 +82,7 @@ module.exports = function () {
         content: {
           "application/json": {
             schema: {
-              $ref: "#/components/schemas/journal",
+              $ref: "#/components/schemas/entry",
             },
           },
         },
@@ -101,32 +90,30 @@ module.exports = function () {
     },
   };
 
-  PATCH.apidoc = {
-    summary: "Update a journal by id",
-    description: "Update a journal by id",
-    operationId: "updateJournalById",
+  PATCH.apiDoc = {
+    summary: "Update an entry by id",
+    description: "Update an entry by id",
+    operationId: "updateEntryById",
     parameters: [
       {
         in: "path",
-        name: "journalId",
+        name: "entryId",
         schema: {
           type: "integer",
           format: "int64",
         },
         required: true,
-        description: "The id of the journal to update",
+        description: "The id of the entry to update",
       },
     ],
     requestBody: {
-      description: "Journal object that needs to be updated",
       content: {
         "application/json": {
           schema: {
-            $ref: "#/components/schemas/journal",
+            $ref: "#/components/schemas/entry",
           },
         },
       },
-      required: true,
     },
     responses: {
       200: {
@@ -149,20 +136,20 @@ module.exports = function () {
     },
   };
 
-  DELETE.apidoc = {
-    summary: "Delete a journal by id",
-    description: "Delete a journal by id",
-    operationId: "deleteJournalById",
+  DELETE.apiDoc = {
+    summary: "Delete an entry by id",
+    description: "Delete an entry by id",
+    operationId: "deleteEntryById",
     parameters: [
       {
         in: "path",
-        name: "journalId",
+        name: "entryId",
         schema: {
           type: "integer",
           format: "int64",
         },
         required: true,
-        description: "The id of the journal to delete",
+        description: "The id of the entry to delete",
       },
     ],
     responses: {
@@ -178,7 +165,7 @@ module.exports = function () {
                   type: "string",
                   example: "Entry created",
                 },
-              }
+              },
             },
           },
         },

@@ -1,7 +1,8 @@
 const MongoClient = require("mongodb").MongoClient;
 
-const uri = "mongodb://localhost:5010/";
-//"mongodb://172.20.0.2:5010/
+//const uri = "mongodb://localhost:5010/"; //local testing
+const uri = "mongodb://172.18.0.1:5010/"; //docker testing
+
 const dbName = "JournalAPI";
 
 let dbconnection;

@@ -1,5 +1,14 @@
 version: "3.9"
+volumes:
+  prometheus_data:
 services:
+  kafkaexporter:
+    image: danielqsj/kafka-exporter
+    command: --kafka.server=broker:29092
+    depends_on:
+      - broker
+    ports:
+      - "9308:9308"
   journaldb:
     image: mongo:latest
     container_name: journaldb
@@ -11,18 +20,26 @@ services:
     links:
       - journaldb
     ports:
-      -"5051:5050"
+      - "5051:5050"
     depends_on:
       - journaldb
+    environment:
+      - apiport=5053
+      - BROKER_SERVER_ADDRESS=broker:29092
+      - JOURNALAPI_TOPIC=journalapiTopic
   myjournalapi2:
     restart: always
     build: ../journalapi
     links:
       - journaldb
     ports:
-      -"5052:5050"
+      - "5052:5050"
     depends_on:
       - journaldb
+    environment:
+      - apiport=5053
+      - BROKER_SERVER_ADDRESS=broker:29092
+      - JOURNALAPI_TOPIC=journalapiTopic
   nginx:
     build: ../nginx
     ports:
@@ -30,4 +47,50 @@ services:
     depends_on:
       - myjournalapi
       - myjournalapi2
-
+  consumerservice:
+    build: ../emailservice
+    ports:
+      - "5054:5054"
+    depends_on:
+      - myjournalapi
+      - myjournalapi2
+      - broker
+      - nginx
+      - zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+  broker:
+    restart: always
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: broker
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    depends_on:
+      - zookeeper
+      - nginx
+      - myjournalapi
+      - myjournalapi2
+    ports:
+     - "9092:9092"
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - myretroapi
+      - myretroapi2
+      - broker
+      - retrodb
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
